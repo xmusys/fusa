@@ -1,0 +1,37 @@
+{
+  "machine_num": 4,
+  "port": 12345,
+  "compute_node": {
+    "servers": [
+      "192.168.6.2"
+    ],
+    "block_size": 8,
+    "type": "write",
+    "machine_id": 3,
+    "ycsb_path": "/home/dell/sqs/ycsb_output/1-node/uniform/a/update",
+    "stride": 4096,
+    "attempts_num": 100000000,
+    "unsignal_batch": 64
+  },
+  "memory_node": {
+    "mem_pool_size": 10,
+    "rpc_region_size": 128,
+    "qp_num": -1,
+    "dump_file_path": "test_rdma.csv",
+    "rpc_enabled": true,
+    "rpc_param": {
+      "compute_thread_num": 32,
+      "rpc_thread_num": 1,
+      "send_batch": 1,
+      "window_size": 16,
+      "unsignal_batch": 64,
+      "thread_qp_batch": 2
+    },
+    "qp_param": {
+      "max_cqe_size": 256,
+      "max_wqe_size": 256,
+      "max_sge_size": 1,
+      "max_inline_data": 64
+    }
+  }
+}

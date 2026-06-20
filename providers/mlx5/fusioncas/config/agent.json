@@ -1,0 +1,20 @@
+{
+  "machine_num": 4,
+  "port": 19291,
+  "compute_node": {
+    "mem_size": 10,
+    "servers": [
+      "192.168.6.2"
+    ],
+    "machine_id": 0
+  },
+  "memory_node": {
+    "mem_size": 80,
+    "qp_param": {
+      "max_cqe_size": 256,
+      "max_wqe_size": 256,
+      "max_sge_size": 1,
+      "max_inline_data": 64
+    }
+  }
+}

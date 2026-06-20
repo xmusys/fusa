@@ -262,6 +262,7 @@ RDMA_EnableCStd()
 # Extra warnings. Turn on -Wextra to keep aware of interesting developments from gcc,
 # but turn off some that are not terribly useful for this source.
 # FIXME: I wonder how many of the signed compares are bugs?
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g")
 RDMA_AddOptCFlag(CMAKE_C_FLAGS HAVE_C_WARNINGS
   "-Wall -Wextra -Wno-sign-compare -Wno-unused-parameter")
 RDMA_AddOptCFlag(CMAKE_C_FLAGS HAVE_C_WMISSING_PROTOTYPES "-Wmissing-prototypes")

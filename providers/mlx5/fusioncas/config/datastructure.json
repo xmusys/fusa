@@ -1,0 +1,27 @@
+{
+  "machine_num": 4,
+  "machine_id": 3,
+  "nr_threads": 32,
+  "tasks_per_thread": 2,
+  "dataset": "ycsb-a",
+  "dump_file_path": "",
+  "nic_numa_node": 1,
+  "cpu_nodes": 2,
+  "cores_per_cpu": 48,
+  "insert_path": "/home/dell/sqs/ycsb_output/1-node/zipfian/a/insert",
+  "ycsb_path": "/home/dell/sqs/ycsb_output/1-node/zipfian/a/ycsb_a50m",
+  "insert_before_execution": false,
+  "insert_num": 50000000,
+  "max_key": 50000000,
+  "key_length": 8,
+  "value_length": 8,
+  "rehash_key": false,
+  "duration": 10,
+  "zipfian_const": 0.99,
+  "memory_servers": [
+    {
+      "hostname": "192.168.6.2",
+      "port": 12345
+    }
+  ]
+}

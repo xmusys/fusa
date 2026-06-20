@@ -1,4 +1,4 @@
-set(MLX5_DEBUG "FALSE" CACHE BOOL
+set(MLX5_DEBUG "TRUE" CACHE BOOL
   "Enable expensive runtime logging options for the mlx5 verbs provider")
 if (MLX5_DEBUG)
   add_definitions("-DMLX5_DEBUG")
@@ -10,9 +10,13 @@ if (MLX5_MW_DEBUG)
   add_definitions("-DMW_DEBUG")
 endif()
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+
 if (ENABLE_LTTNG AND LTTNGUST_FOUND)
   set(TRACE_FILE mlx5_trace.c)
 endif()
+
 
 rdma_shared_provider(mlx5 libmlx5.map
   1 1.25.${PACKAGE_VERSION}
@@ -42,9 +46,13 @@ rdma_shared_provider(mlx5 libmlx5.map
   mlx5.c
   mlx5_vfio.c
   qp.c
+  recorder.c
   srq.c
   verbs.c
 )
+
+target_link_libraries(mlx5 PRIVATE rt)
+
 
 publish_headers(infiniband
   ../../kernel-headers/rdma/mlx5_user_ioctl_verbs.h
@@ -53,6 +61,7 @@ publish_headers(infiniband
 )
 
 rdma_pkg_config("mlx5" "libibverbs" "${CMAKE_THREAD_LIBS_INIT}")
+
 
 if (ENABLE_LTTNG AND LTTNGUST_FOUND)
 	target_include_directories(mlx5 PUBLIC ".")

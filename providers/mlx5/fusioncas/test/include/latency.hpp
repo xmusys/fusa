@@ -1,0 +1,6 @@
+
+
+class Latency {
+    public:
+	Latency()
+};

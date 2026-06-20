@@ -1,146 +1,156 @@
-[![Build Status](https://dev.azure.com/ucfconsort/rdma-core/_apis/build/status/linux-rdma.rdma-core?branchName=master)](https://dev.azure.com/ucfconsort/rdma-core/_build/latest?definitionId=2&branchName=master)
+# Fusa — A Hardware–Software-Collaborated RDMA Atomic Scaling Framework
 
-# RDMA Core Userspace Libraries and Daemons
+This repository is a **fork of [rdma-core](https://github.com/linux-rdma/rdma-core)** with modifications to `providers/mlx5` that implement the **Fusa** framework. Fusa is a hardware-software collaborative framework that improves RDMA atomic scalability by keeping low-contention atomics on RNIC hardware and selectively offloading high-contention atomics to server-side CPU software.
 
-This is the userspace components for the Linux Kernel's drivers/infiniband
-subsystem. Specifically this contains the userspace libraries for the
-following device nodes:
+The fork is initialized from rdma-core commit [`0ff4fc60a`](https://github.com/linux-rdma/rdma-core/tree/0ff4fc60a) and all modifications are confined to the `providers/mlx5/` directory.
 
- - /dev/infiniband/uverbsX (libibverbs)
- - /dev/infiniband/rdma_cm (librdmacm)
- - /dev/infiniband/umadX (libibumad)
+For technical details, please refer to:
+> Guangyang Deng, Qiangsheng Su, Zhirong Shen, Qing Wang, Yina LV, Ronglong Wu, Jiwu Shu. Breaking Barriers in Atomic Scaling: A Hardware–Software-Collaborated Framework to Deconstruct RDMA Atomic. In *53rd Annual International Symposium on Computer Architecture (ISCA 2026)*.
 
-The userspace component of the libibverbs RDMA kernel drivers are included
-under the providers/ directory. Support for the following Kernel RDMA drivers
-is included:
+---
 
- - bnxt_re.ko
- - efa.ko
- - erdma.ko
- - iw_cxgb4.ko
- - hfi1.ko
- - hns-roce.ko
- - irdma.ko
- - ib_qib.ko
- - mana_ib.ko
- - mlx4_ib.ko
- - mlx5_ib.ko
- - ib_mthca.ko
- - ocrdma.ko
- - qedr.ko
- - rdma_rxe.ko
- - siw.ko
- - vmw_pvrdma.ko
-
-Additional service daemons are provided for:
- - srp_daemon (ib_srp.ko)
- - iwpmd (for iwarp kernel providers)
- - ibacm (for InfiniBand communication management assistant)
-
-# Building
-
-This project uses a cmake based build system. Quick start:
-
-```sh
-$ bash build.sh
-```
-
-*build/bin* will contain the sample programs and *build/lib* will contain the
-shared libraries. The build is configured to run all the programs 'in-place'
-and cannot be installed.
-
-### Debian Derived
-
-```sh
-$ apt-get install build-essential cmake gcc libudev-dev libnl-3-dev libnl-route-3-dev ninja-build pkg-config valgrind python3-dev cython3 python3-docutils pandoc
-```
-
-Supported releases:
-
-* Debian 9 (stretch) or newer
-* Ubuntu 16.04 LTS (xenial) or newer
-
-### Fedora, CentOS 8
-
-```sh
-$ dnf builddep redhat/rdma-core.spec
-```
-
-NOTE: Fedora Core uses the name 'ninja-build' for the 'ninja' command.
-
-### openSUSE
-
-```sh
-$ zypper install cmake gcc libnl3-devel libudev-devel ninja pkg-config valgrind-devel python3-devel python3-Cython python3-docutils pandoc
-```
-
-## Building on CentOS 7, Amazon Linux 2
-
-Install required packages:
-
-```sh
-$ yum install cmake gcc libnl3-devel libudev-devel make pkgconfig valgrind-devel
-```
-
-Developers on CentOS 7 or Amazon Linux 2 are suggested to install more modern
-tooling for the best experience.
-
-CentOS 7:
-
-```sh
-$ yum install epel-release
-$ yum install cmake3 ninja-build pandoc
-```
-
-Amazon Linux 2:
-
-```sh
-$ amazon-linux-extras install epel
-$ yum install cmake3 ninja-build pandoc
-```
-
-NOTE: EPEL uses the name 'ninja-build' for the 'ninja' command, and 'cmake3'
-for the 'cmake' command.
-
-# Usage
-
-To set up software RDMA on an existing interface with either of the available
-drivers, use the following commands, substituting `<DRIVER>` with the name of
-the driver of your choice (`rdma_rxe` or `siw`) and `<TYPE>` with the type
-corresponding to the driver (`rxe` or `siw`).
+## Repository Layout
 
 ```
-# modprobe <DRIVER>
-# rdma link add <NAME> type <TYPE> netdev <DEVICE>
+├── providers/mlx5/       # Modified mlx5 provider with Fusa hooks
+│   ├── qp.c, verbs.c, ...  # Core mlx5 provider sources
+│   ├── recorder.{c,h}      # Bloom-filter-based contention recorder
+│   ├── fusioncas/          # Experiment framework and evaluation binaries
+│   │   ├── agent/          # Fusa-Agent (RPC dispatch control)
+│   │   ├── test/           # Experiment executables
+│   │   ├── smart/          # Runtime support
+│   │   ├── smart_ht/       # Hash-table integration
+│   │   ├── util/           # Utility components
+│   │   └── scripts/        # Experiment orchestration scripts
+│   └── README.md           # Provider-level usage details
+├── CMakeLists.txt          # Standard rdma-core CMake (unmodified upstream)
+├── build.sh                # Standard rdma-core build script (unmodified upstream)
+├── make.sh                 # Shortcut: builds rdma-core then copies libs into fusioncas/
+└── README.md               # This file
 ```
 
-Please note that you need version of `iproute2` recent enough is required for the
-command above to work.
+All other files (`libibverbs/`, `librdmacm/`, `libibumad/`, other `providers/*/`) remain at their upstream rdma-core `0ff4fc60a` state.
 
-You can use either `ibv_devices` or `rdma link` to verify that the device was
-successfully added.
+---
 
-# Reporting bugs
+## Building
 
-Bugs should be reported to the <linux-rdma@vger.kernel.org> mailing list
-In your bug report, please include:
+### 1. Build rdma-core (produces modified `libmlx5.so`)
 
- * Information about your system:
-   - Linux distribution and version
-   - Linux kernel and version
-   - InfiniBand hardware and firmware version
-   - ... any other relevant information
+```bash
+# Standard rdma-core build (from repo root)
+mkdir -p build
+cd build
+cmake -DIN_PLACE=1 ..
+make -j$(nproc)
+cd ..
 
- * How to reproduce the bug.
+# The modified libmlx5.so is at: build/lib/libmlx5.so*
+```
 
- * If the bug is a crash, the exact output printed out when the crash
-   occurred, including any kernel messages produced.
+The `build.sh` script (inherited from upstream) does the same:
 
-# Submitting patches
+```bash
+./build.sh
+```
 
-See [Contributing to rdma-core](Documentation/contributing.md).
+### 2. Build the FusionCAS experiment framework
 
-# Stable branches
+```bash
+cd providers/mlx5/fusioncas
+mkdir -p build && cd build
+cmake ..
+make -j$(nproc)
+cd ../../..
+```
 
-Stable versions are released regularly with backported fixes (see Documentation/stable.md)
-The current minimum version still maintained is 'v33.X'
+Or use the shortcut `make.sh` which does both steps and copies the built libraries:
+
+```bash
+./make.sh
+```
+
+---
+
+## Minimal Working Example
+
+After building, the following example demonstrates the basic flow on a cluster with RDMA-capable devices:
+
+### On the memory node (server):
+
+```bash
+# Start the Fusa agent in server mode
+#   threshold=80000  enable=enable  pcie_atomic=enable  workers=4
+./providers/mlx5/fusioncas/build/agent/test_agent server 80000 enable enable 4
+
+# In a separate shell, start the application server
+./providers/mlx5/fusioncas/build/test/test_rdma server
+```
+
+### On each compute node (client):
+
+```bash
+# Start the Fusa agent in client mode
+./providers/mlx5/fusioncas/build/agent/test_agent client
+
+# Run the client benchmark (32 threads, depth 2)
+./providers/mlx5/fusioncas/build/test/test_rdma client 32 2
+```
+
+The `test_rdma` benchmark performs concurrent RDMA CAS/FAA operations against the server. With the Fusa agent running, high-contention atomics are automatically offloaded to the server CPU while low-contention atomics execute directly on the RNIC.
+
+### Running a pre-configured experiment
+
+For YCSB-style evaluation with automated agent orchestration across machines:
+
+```bash
+# Requires passwordless SSH to compute nodes. Edit configs and machines in:
+#   providers/mlx5/fusioncas/config/test_rdma.json
+#   providers/mlx5/fusioncas/scripts/run_ycsb.py
+
+cd providers/mlx5/fusioncas/scripts
+python3 run_ycsb.py
+```
+
+---
+
+## Verifying the Modifications
+
+```bash
+# Check what changed relative to the upstream baseline
+git show 8f7b750:providers/mlx5/ > /tmp/baseline-mlx5.tar 2>/dev/null
+
+# The key additions are:
+#   providers/mlx5/recorder.{c,h}        — Contention recording (Bloom filter)
+#   providers/mlx5/fusioncas/             — Full experiment framework
+#   providers/mlx5/CMakeLists.txt          — Added recorder.c to the build
+```
+
+Modified upstream files in `providers/mlx5/`:
+
+- `qp.c` — Post-send hook for contention recording and RPC dispatch
+- `verbs.c` — Integration hooks
+- `CMakeLists.txt` — Added `recorder.c` compilation unit
+
+---
+
+## Dependencies
+
+Same as [upstream rdma-core](https://github.com/linux-rdma/rdma-core):
+
+```bash
+# Debian / Ubuntu
+apt-get install build-essential cmake gcc libudev-dev libnl-3-dev \
+                libnl-route-3-dev ninja-build pkg-config valgrind \
+                python3-dev cython3 python3-docutils pandoc
+
+# Fedora / CentOS 8
+dnf builddep redhat/rdma-core.spec
+
+# CentOS 7 / Amazon Linux 2
+yum install cmake gcc libnl3-devel libudev-devel make pkgconfig valgrind-devel
+```
+
+## Acknowledgments
+
+This repository includes source code derived from [rdma-core](https://github.com/linux-rdma/rdma-core) (commit `0ff4fc60a`) and [SMART-HT](https://github.com/madsys-dev/smart). We thank the original projects and their contributors for making their work open source.
